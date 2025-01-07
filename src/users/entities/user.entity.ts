@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert } from 'typeorm';
+import { Chat } from 'src/chat/entities/chat.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  BeforeInsert,
+  OneToMany,
+} from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -23,4 +30,7 @@ export class User {
     // Parolni xesh qilishni unutmaslik kerak. Misol uchun bcrypt.js ishlatish mumkin.
     // this.password = bcrypt.hashSync(this.password, 10); // Agar kerak bo'lsa
   }
+
+  @OneToMany(() => Chat, (chat) => chat.user)
+  chat: Chat[];
 }

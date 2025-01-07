@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User, Role } from './entities/user.entity'; // Role enum-ni import qilish
+import { User, Role } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -30,7 +30,7 @@ export class AuthService {
       username: createAuthDto.username,
       email: createAuthDto.email,
       password: await bcrypt.hash(createAuthDto.password, 10),
-      role: Role.ADMIN, // Enumdan foydalanish
+      role: Role.ADMIN,
     });
     await this.userRepository.save(user);
     return { message: 'Admin is successfully registered' };
@@ -48,7 +48,7 @@ export class AuthService {
       username: createAuthDto.username,
       email: createAuthDto.email,
       password: await bcrypt.hash(createAuthDto.password, 10),
-      role: Role.USER, // Enumdan foydalanish
+      role: Role.USER,
     });
 
     await this.userRepository.save(user);
@@ -87,7 +87,7 @@ export class AuthService {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role, // Enum qiymati
+        role: user.role,
       },
     };
   }

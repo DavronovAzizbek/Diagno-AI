@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { AuthGuard } from './auth.guard';
+import { AuthRolesGuard } from './authRoles.guard';
 import { Response, Request } from 'express';
 
 @Controller('auth')
@@ -45,7 +45,7 @@ export class AuthController {
     return res.status(200).json({ accessToken, user });
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthRolesGuard)
   @Post('refresh-token')
   async refreshAccessToken(@Req() req: Request, @Res() res: Response) {
     const refreshToken = req.cookies.refreshToken;
@@ -65,7 +65,7 @@ export class AuthController {
     return res.status(200).json({ accessToken });
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthRolesGuard)
   @Delete('logout')
   async logout(@Res() res: Response, @Req() req: Request) {
     const refreshToken = req.cookies.refreshToken;

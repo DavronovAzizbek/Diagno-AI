@@ -10,7 +10,7 @@ import { Reflector } from '@nestjs/core';
 export const Roles = (...roles: string[]) => SetMetadata('roles', roles);
 
 @Injectable()
-export class RolesGuard implements CanActivate {
+export class RoleAdminGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {

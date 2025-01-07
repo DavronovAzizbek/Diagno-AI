@@ -1,4 +1,11 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
 export class CreateChatDto {
   @IsNotEmpty()
@@ -12,4 +19,10 @@ export class CreateChatDto {
   @IsOptional()
   @IsBoolean()
   isFavorite?: boolean;
+
+  @IsOptional()
+  @IsInt() // Faqat integer qiymatga ruxsat
+  @Min(1) // Faqat ijobiy qiymatga ruxsat
+  userId?: number;
+  user: { id: any };
 }

@@ -28,7 +28,7 @@ export class User {
 
   // Role enum-ni ishlatish
   @Column({ type: 'enum', enum: Role })
-  role: Role;
+  role: string;
 
   @Column({ type: 'varchar', nullable: true })
   refreshToken?: string;

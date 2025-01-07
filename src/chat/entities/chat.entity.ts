@@ -3,38 +3,43 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  CreateDateColumn,
+  UpdateDateColumn,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
 
-@Entity()
+@Entity('chats')
 export class Chat {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column()
   name: string;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
-  path: string;
-
-  @Column({ type: 'jsonb', default: [] })
-  content: any;
-
-  @Column({ type: 'boolean', default: false })
+  @Column({ default: false })
   isFavorite: boolean;
 
-  @ManyToOne(() => User, (user) => user.chats)
+  // JSON formatida kontent saqlash
+  @Column({ type: 'simple-json', default: [] })
+  content: {
+    id: string;
+    message: string;
+    author: string;
+    timestamp: Date;
+    editedAt?: Date;
+  }[];
+
+  @Column()
+  userId: number; // Foydalanuvchi bilan bog'liq xususiyat
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @ManyToOne(() => User, (user) => user.chats, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
-
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createAt: Date;
-
-  @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  updateAt: Date;
 }
