@@ -67,6 +67,33 @@ export class ChatsController {
 
   @UseGuards(RolesUserGuard)
   @Roles('user')
+  @Get('/my-chats')
+  async getMyChats(@Query('userId') userId: string) {
+    const parsedUserId = parseInt(userId, 10);
+    if (isNaN(parsedUserId) || parsedUserId <= 0) {
+      throw new BadRequestException('Invalid userId');
+    }
+
+    const chats = await this.chatsService.getChatsByUserId(parsedUserId);
+
+    // Foydalanuvchi ma'lumotlarini tozalash
+    const sanitizedChats = chats.map((chat) => {
+      if (chat.user) {
+        delete chat.user.password;
+        delete chat.user.role;
+        delete chat.user.refreshToken;
+      }
+      return chat;
+    });
+
+    return {
+      message: 'User chats retrieved successfully',
+      data: sanitizedChats,
+    };
+  }
+
+  @UseGuards(RolesUserGuard)
+  @Roles('user')
   @Get(':id')
   async getChatById(@Param('id') id: number) {
     try {
@@ -76,19 +103,6 @@ export class ChatsController {
       console.error('Error retrieving chat by ID:', error);
       throw new InternalServerErrorException('Failed to retrieve chat');
     }
-  }
-
-  @UseGuards(RolesUserGuard)
-  @Roles('user')
-  @Get('/my-chats')
-  async getMyChats(@Query('userId') userId: string) {
-    console.log(`Received userId: ${userId}`);
-    const parsedUserId = parseInt(userId, 10);
-    if (isNaN(parsedUserId) || parsedUserId <= 0) {
-      throw new BadRequestException('Invalid userId');
-    }
-    const chats = await this.chatsService.getChatsByUserId(parsedUserId);
-    return { message: 'User chats retrieved successfully', data: chats };
   }
 
   @UseGuards(AuthRolesGuard)

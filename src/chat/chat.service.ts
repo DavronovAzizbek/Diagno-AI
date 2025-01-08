@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Chat } from './entities/chat.entity';
@@ -58,12 +62,30 @@ export class ChatsService {
   }
 
   async getChatsByUserId(userId: number): Promise<Chat[]> {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: ['chats'], // Foydalanuvchiga tegishli chatlarni olish
+    if (!Number.isInteger(userId) || userId <= 0) {
+      throw new BadRequestException('User ID must be a positive integer');
+    }
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    const chats = await this.chatRepository.find({
+      where: { user: { id: userId } },
+      relations: ['user'],
     });
-    if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
-    return user.chats;
+
+    // Har bir chatdagi foydalanuvchi obyektini tozalash
+    chats.forEach((chat) => {
+      if (chat.user) {
+        delete chat.user.password;
+        delete chat.user.role;
+        delete chat.user.refreshToken;
+      }
+    });
+
+    return chats;
   }
 
   async updateChat(id: number, updateChatDto: UpdateChatDto): Promise<Chat> {
