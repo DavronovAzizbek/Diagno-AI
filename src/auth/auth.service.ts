@@ -10,6 +10,8 @@ import { User, Role } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as nodemailer from 'nodemailer';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -18,16 +20,23 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  // Parollarni solishtirish funksiyasi
+  async comparePasswords(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+  }
+
   async registerAdmin(createAuthDto: CreateAuthDto) {
     const existingUser = await this.userRepository.findOne({
-      where: { username: createAuthDto.username },
+      where: { email: createAuthDto.email },
     });
     if (existingUser) {
-      throw new ConflictException('Username already exists');
+      throw new ConflictException('Email already exists');
     }
 
     const user = this.userRepository.create({
-      username: createAuthDto.username,
       email: createAuthDto.email,
       password: await bcrypt.hash(createAuthDto.password, 10),
       role: Role.ADMIN,
@@ -38,14 +47,13 @@ export class AuthService {
 
   async register(createAuthDto: CreateAuthDto) {
     const existingUser = await this.userRepository.findOne({
-      where: { username: createAuthDto.username },
+      where: { email: createAuthDto.email },
     });
     if (existingUser) {
-      throw new ConflictException('Username already exists');
+      throw new ConflictException('Email already exists');
     }
 
     const user = this.userRepository.create({
-      username: createAuthDto.username,
       email: createAuthDto.email,
       password: await bcrypt.hash(createAuthDto.password, 10),
       role: Role.USER,
@@ -55,41 +63,91 @@ export class AuthService {
     return { message: 'You are successfully registered' };
   }
 
-  async login(loginDto: { username: string; password: string }) {
+  async sendVerificationCode(email: string) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const verificationCode = crypto.randomInt(100000, 999999).toString(); // Tasdiqlash kodi yaratish (6 xonali)
+    user.verificationCode = verificationCode;
+    await this.userRepository.save(user);
+
+    // Email orqali yuborish (nodemailer)
+    await this.sendEmail(
+      user.email,
+      'Tasdiqlash kodi',
+      `Tasdiqlash kodingiz: ${verificationCode}`,
+    );
+    return { message: 'Verification code sent to email' };
+  }
+
+  async resendVerificationCode(email: string) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const verificationCode = crypto.randomInt(100000, 999999).toString(); // Yangi kod yaratish
+    user.verificationCode = verificationCode;
+    await this.userRepository.save(user);
+
+    // Email orqali yuborish
+    await this.sendEmail(
+      user.email,
+      'Qayta tasdiqlash kodi',
+      `Tasdiqlash kodingiz: ${verificationCode}`,
+    );
+    return { message: 'Verification code resent to email' };
+  }
+
+  private async sendEmail(to: string, subject: string, body: string) {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject,
+      text: body,
+    });
+  }
+
+  async login(loginDto: { email: string; password: string }) {
+    const { email, password } = loginDto;
+
     const user = await this.userRepository.findOne({
-      where: { username: loginDto.username },
+      where: { email },
     });
 
     if (!user) {
-      throw new NotFoundException('User not found ❌');
+      throw new UnauthorizedException('Invalid email or password ❌');
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      loginDto.password,
+    const isPasswordValid = await this.comparePasswords(
+      password,
       user.password,
     );
-
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Incorrect password ❌');
+      throw new UnauthorizedException('Invalid email or password ❌');
     }
 
-    const payload = { id: user.id, username: user.username, role: user.role };
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '30d' });
+    const accessToken = this.jwtService.sign({ id: user.id, role: user.role });
+    const refreshToken = this.jwtService.sign(
+      { id: user.id },
+      { expiresIn: '30d' },
+    );
 
     user.refreshToken = refreshToken;
     await this.userRepository.save(user);
 
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-      },
-    };
+    // Faqat parol va refreshTokenni kiritmasdan foydalanuvchini qaytaring
+    return { accessToken, refreshToken, user };
   }
 
   async refreshAccessToken(
@@ -107,7 +165,6 @@ export class AuthService {
 
       const newAccessToken = this.jwtService.sign({
         id: user.id,
-        username: user.username,
         role: user.role,
       });
 

@@ -12,6 +12,7 @@ import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { AuthRolesGuard } from './authRoles.guard';
 import { Response, Request } from 'express';
+import { VerificationDto } from './dto/verification.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -27,9 +28,19 @@ export class AuthController {
     return this.authService.register(createAuthDto);
   }
 
+  @Post('send-verification-code')
+  async sendVerificationCode(@Body() body: VerificationDto) {
+    return this.authService.sendVerificationCode(body.email);
+  }
+
+  @Post('resend-verification-code')
+  async resendVerificationCode(@Body() body: VerificationDto) {
+    return this.authService.resendVerificationCode(body.email);
+  }
+
   @Post('login')
   async login(
-    @Body() loginDto: { username: string; password: string },
+    @Body() loginDto: { email: string; password: string },
     @Res() res: Response,
   ) {
     const { accessToken, refreshToken, user } =
@@ -39,10 +50,14 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 kun
     });
 
-    return res.status(200).json({ accessToken, user });
+    // Parolni va refreshTokenni olib tashlash
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, refreshToken: _, ...sanitizedUser } = user;
+
+    return res.status(200).json({ accessToken, user: sanitizedUser });
   }
 
   @UseGuards(AuthRolesGuard)

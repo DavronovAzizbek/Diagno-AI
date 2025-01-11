@@ -6,7 +6,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-// Role enum-ni aniqlash
 export enum Role {
   ADMIN = 'admin',
   USER = 'user',
@@ -17,26 +16,24 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
-  username: string;
-
-  @Column({ type: 'varchar', length: 2500 })
-  password: string;
-
-  @Column({ type: 'varchar', length: 2500 })
+  @Column({ type: 'varchar', length: 2500, unique: true })
   email: string;
 
-  // Role enum-ni ishlatish
+  @Column()
+  password: string; // Parol maydoni
+
+  @Column({ nullable: true })
+  refreshToken: string; // Refresh token maydoni
+
   @Column({ type: 'enum', enum: Role })
   role: string;
-
-  @Column({ type: 'varchar', nullable: true })
-  refreshToken?: string;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+  verificationCode: any;
+  verificationCodeExpiresAt: Date;
   chats: any;
 }

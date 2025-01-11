@@ -42,4 +42,5 @@ export class Chat {
   @ManyToOne(() => User, (user) => user.chats, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
+  page: any;
 }

@@ -14,7 +14,7 @@ import { User } from './auth/entities/user.entity';
       port: 5432,
       username: 'postgres',
       password: 'azizbek002',
-      database: 'chat2',
+      database: 'chat5',
       entities: [Chat, User],
       synchronize: true,
     }),
