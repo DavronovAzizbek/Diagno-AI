@@ -1,21 +1,44 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Page } from './entities/page.entity';
+import { CreatePageDto } from './dto/create-page.dto';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class PagesService {
-  constructor(
-    @InjectRepository(Page)
-    private readonly pageRepository: Repository<Page>,
-  ) {}
+  private pages: Page[] = [];
+  private idCounter = 1;
 
-  async createPage(data: Partial<Page>): Promise<Page> {
-    const page = this.pageRepository.create(data);
-    return this.pageRepository.save(page);
+  create(createPageDto: CreatePageDto): Page {
+    try {
+      const slug = uuidv4();
+      const newPage: Page = {
+        id: this.idCounter++,
+        name: createPageDto.name || 'untitled',
+        path: createPageDto.path || `new-chat/${slug}`,
+        isFavorite: createPageDto.isFavorite || false,
+        content: createPageDto.content,
+        createAt: new Date(),
+        updateAt: new Date(),
+      };
+
+      this.pages.push(newPage);
+      return newPage;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to create page. Please try again later.',
+        error.message,
+      );
+    }
   }
 
-  async getAllPages(): Promise<Page[]> {
-    return this.pageRepository.find();
+  findAll(): Page[] {
+    try {
+      return this.pages;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to retrieve pages. Please try again later.',
+        error.message,
+      );
+    }
   }
 }

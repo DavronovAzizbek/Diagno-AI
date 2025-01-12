@@ -1,42 +1,36 @@
-import { Chat } from 'src/chat/entities/chat.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-} from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
+  IsString,
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsDate,
+  IsNumber,
+  IsJSON,
+} from 'class-validator';
 
-@Entity('pages')
 export class Page {
-  @PrimaryGeneratedColumn()
+  @IsNumber()
   id: number;
-  slug: string;
 
-  constructor() {
-    this.slug = uuidv4();
-  }
-
-  @Column()
+  @IsString()
+  @IsNotEmpty()
   name: string;
 
-  @Column()
+  @IsString()
+  @IsNotEmpty()
   path: string;
 
-  @Column({ type: 'json', nullable: true })
-  content: any; // JSON format uchun
-
-  @Column({ default: false })
+  @IsBoolean()
+  @IsOptional()
   isFavorite: boolean;
 
-  @CreateDateColumn()
-  createdAt: Date;
+  @IsJSON()
+  @IsNotEmpty()
+  content: string;
 
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @IsDate()
+  createAt: Date;
 
-  @OneToMany(() => Chat, (chat) => chat.page)
-  chats: Chat[];
+  @IsDate()
+  updateAt: Date;
 }

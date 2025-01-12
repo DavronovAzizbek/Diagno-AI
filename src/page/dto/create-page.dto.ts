@@ -1,14 +1,25 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsOptional,
+  IsNotEmpty,
+  IsJSON,
+} from 'class-validator';
 
 export class CreatePageDto {
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
   name: string;
 
-  @IsNotEmpty()
   @IsString()
-  path: string;
+  @IsOptional() // Path ixtiyoriy bo'lishi kerak
+  path?: string;
 
+  @IsBoolean()
   @IsOptional()
   isFavorite?: boolean;
+
+  @IsJSON()
+  @IsNotEmpty()
+  content: string;
 }

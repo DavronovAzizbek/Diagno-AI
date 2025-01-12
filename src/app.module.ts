@@ -5,6 +5,8 @@ import { Chat } from './chat/entities/chat.entity';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { User } from './auth/entities/user.entity';
+import { PagesModule } from './page/page.module';
+import { Page } from './page/entities/page.entity';
 
 @Module({
   imports: [
@@ -15,12 +17,13 @@ import { User } from './auth/entities/user.entity';
       username: 'postgres',
       password: 'azizbek002',
       database: 'chat5',
-      entities: [Chat, User],
+      entities: [Chat, User, Page],
       synchronize: true,
     }),
     ChatsModule,
     AuthModule,
     UsersModule,
+    PagesModule,
   ],
 })
 export class AppModule {}
