@@ -20,10 +20,10 @@ export class User {
   email: string;
 
   @Column()
-  password: string; // Parol maydoni
+  password: string;
 
   @Column({ nullable: true })
-  refreshToken: string; // Refresh token maydoni
+  refreshToken: string;
 
   @Column({ type: 'enum', enum: Role })
   role: string;

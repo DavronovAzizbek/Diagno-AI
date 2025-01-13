@@ -3,9 +3,9 @@ import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 export class EditMessageDto {
   @IsString()
   @IsNotEmpty()
-  messageId: string; // Xabarning noyob identifikatori
+  messageId: string;
 
   @IsString()
   @IsOptional()
-  newMessage?: string; // Tahrirlangan matn
+  newMessage?: string;
 }

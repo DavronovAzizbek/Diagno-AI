@@ -12,7 +12,7 @@ export class CreatePageDto {
   name: string;
 
   @IsString()
-  @IsOptional() // Path ixtiyoriy bo'lishi kerak
+  @IsOptional()
   path?: string;
 
   @IsBoolean()

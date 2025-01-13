@@ -29,7 +29,7 @@ export class ChatsController {
   @Roles('user', 'admin')
   @Post()
   async createChat(@Body() createChatDto: CreateChatDto, @Req() req) {
-    const userId = req.user.id; // Token orqali foydalanuvchi ID sini oling
+    const userId = req.user.id;
     createChatDto.userId = userId;
     const newChat = await this.chatsService.createChat(createChatDto);
     return { message: 'Chat created successfully', data: newChat };
@@ -76,7 +76,6 @@ export class ChatsController {
 
     const chats = await this.chatsService.getChatsByUserId(parsedUserId);
 
-    // Foydalanuvchi ma'lumotlarini tozalash
     const sanitizedChats = chats.map((chat) => {
       if (chat.user) {
         delete chat.user.password;

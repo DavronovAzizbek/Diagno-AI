@@ -19,7 +19,7 @@ export class ChatsService {
     @InjectRepository(Chat)
     private readonly chatRepository: Repository<Chat>,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>, // User repositoryni qo'shish
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async getChatById(id: number): Promise<Chat> {
@@ -33,7 +33,7 @@ export class ChatsService {
   async createChat(createChatDto: CreateChatDto): Promise<Chat> {
     const chat = this.chatRepository.create({
       ...createChatDto,
-      userId: createChatDto.userId, // Bu yerda userId ni to'g'ri oling
+      userId: createChatDto.userId,
       content: [],
       isFavorite: createChatDto.isFavorite || false,
     });
@@ -49,7 +49,7 @@ export class ChatsService {
       id: messageId,
       ...addMessageDto,
       timestamp: new Date(),
-      editedAt: undefined, // boshlang'ich qiymat
+      editedAt: undefined,
     };
 
     chat.content.push(newMessage);
@@ -76,7 +76,6 @@ export class ChatsService {
       relations: ['user'],
     });
 
-    // Har bir chatdagi foydalanuvchi obyektini tozalash
     chats.forEach((chat) => {
       if (chat.user) {
         delete chat.user.password;

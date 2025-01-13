@@ -53,7 +53,6 @@ export class AuthController {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 kun
     });
 
-    // Parolni va refreshTokenni olib tashlash
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, refreshToken: _, ...sanitizedUser } = user;
 

@@ -31,7 +31,7 @@ export class Chat {
   }[];
 
   @Column()
-  userId: number; // Foydalanuvchi bilan bog'liq xususiyat
+  userId: number;
 
   @CreateDateColumn()
   createdAt: Date;

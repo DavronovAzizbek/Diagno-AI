@@ -21,8 +21,8 @@ export class CreateChatDto {
   isFavorite?: boolean;
 
   @IsOptional()
-  @IsInt() // Faqat integer qiymatga ruxsat
-  @Min(1) // Faqat ijobiy qiymatga ruxsat
+  @IsInt()
+  @Min(1)
   userId?: number;
   user: { id: any };
 }

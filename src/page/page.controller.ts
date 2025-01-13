@@ -5,14 +5,21 @@ import {
   Body,
   HttpException,
   HttpStatus,
+  UseGuards,
+  Param,
+  Delete,
 } from '@nestjs/common';
 import { PagesService } from './page.service';
 import { CreatePageDto } from './dto/create-page.dto';
+import { RolesUserGuard } from 'src/auth/roleUserGuard';
+import { AuthRolesGuard, Roles } from 'src/auth/authRoles.guard';
 
 @Controller('pages')
 export class PagesController {
   constructor(private readonly pagesService: PagesService) {}
 
+  @UseGuards(RolesUserGuard)
+  @Roles('user')
   @Post('create')
   createPage(@Body() createPageDto: CreatePageDto): any {
     try {
@@ -32,6 +39,8 @@ export class PagesController {
     }
   }
 
+  @UseGuards(RolesUserGuard)
+  @Roles('user')
   @Get('getAll')
   getAllPages(): any {
     try {
@@ -44,6 +53,37 @@ export class PagesController {
       throw new HttpException(
         {
           message: 'Failed to retrieve pages. Please try again later.',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @UseGuards(AuthRolesGuard)
+  @Roles('admin')
+  @Delete('delete/:id')
+  deletePage(@Param('id') id: string): any {
+    try {
+      const result = this.pagesService.deletePage(Number(id));
+      return {
+        message: 'Page successfully deleted!',
+        data: result,
+      };
+    } catch (error) {
+      if (error.status === HttpStatus.NOT_FOUND) {
+        throw new HttpException(
+          {
+            message: 'Page not found.',
+            error: error.message,
+          },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      throw new HttpException(
+        {
+          message: 'Failed to delete page. Please try again later.',
           error: error.message,
         },
         HttpStatus.INTERNAL_SERVER_ERROR,

@@ -146,7 +146,6 @@ export class AuthService {
     user.refreshToken = refreshToken;
     await this.userRepository.save(user);
 
-    // Faqat parol va refreshTokenni kiritmasdan foydalanuvchini qaytaring
     return { accessToken, refreshToken, user };
   }
 
