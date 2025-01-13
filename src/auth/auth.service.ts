@@ -20,19 +20,17 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  // Parollarni solishtirish funksiyasi
   async comparePasswords(
     plainPassword: string,
     hashedPassword: string,
   ): Promise<boolean> {
-    return await bcrypt.compare(plainPassword, hashedPassword);
+    return bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  async register(createAuthDto: CreateAuthDto, role: Role) {
+  async registerAdmin(createAuthDto: CreateAuthDto) {
     const existingUser = await this.userRepository.findOne({
       where: { email: createAuthDto.email },
     });
-
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
@@ -40,11 +38,28 @@ export class AuthService {
     const user = this.userRepository.create({
       email: createAuthDto.email,
       password: await bcrypt.hash(createAuthDto.password, 10),
-      role,
+      role: Role.ADMIN,
+    });
+    await this.userRepository.save(user);
+    return { message: 'Admin successfully registered' };
+  }
+
+  async register(createAuthDto: CreateAuthDto) {
+    const existingUser = await this.userRepository.findOne({
+      where: { email: createAuthDto.email },
+    });
+    if (existingUser) {
+      throw new ConflictException('Email already exists');
+    }
+
+    const user = this.userRepository.create({
+      email: createAuthDto.email,
+      password: await bcrypt.hash(createAuthDto.password, 10),
+      role: Role.USER,
     });
 
     await this.userRepository.save(user);
-    return { message: `${role} successfully registered` };
+    return { message: 'Successfully registered' };
   }
 
   async sendVerificationCode(email: string) {
@@ -53,36 +68,20 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    const verificationCode = crypto.randomInt(100000, 999999).toString(); // Tasdiqlash kodi yaratish (6 xonali)
+    const verificationCode = crypto.randomInt(100000, 999999).toString();
     user.verificationCode = verificationCode;
     await this.userRepository.save(user);
 
-    // Email orqali yuborish (nodemailer)
     await this.sendEmail(
       user.email,
-      'Tasdiqlash kodi',
-      `Tasdiqlash kodingiz: ${verificationCode}`,
+      'Verification Code',
+      `Your verification code is: ${verificationCode}`,
     );
     return { message: 'Verification code sent to email' };
   }
 
   async resendVerificationCode(email: string) {
-    const user = await this.userRepository.findOne({ where: { email } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    const verificationCode = crypto.randomInt(100000, 999999).toString(); // Yangi kod yaratish
-    user.verificationCode = verificationCode;
-    await this.userRepository.save(user);
-
-    // Email orqali yuborish
-    await this.sendEmail(
-      user.email,
-      'Qayta tasdiqlash kodi',
-      `Tasdiqlash kodingiz: ${verificationCode}`,
-    );
-    return { message: 'Verification code resent to email' };
+    return this.sendVerificationCode(email);
   }
 
   private async sendEmail(to: string, subject: string, body: string) {
@@ -105,9 +104,7 @@ export class AuthService {
   async login(loginDto: { email: string; password: string }) {
     const { email, password } = loginDto;
 
-    const user = await this.userRepository.findOne({
-      where: { email },
-    });
+    const user = await this.userRepository.findOne({ where: { email } });
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password ❌');
@@ -179,7 +176,7 @@ export class AuthService {
       user.refreshToken = null;
       await this.userRepository.save(user);
 
-      return { message: 'User successfully logged out' };
+      return { message: 'Successfully logged out' };
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new UnauthorizedException('Token is invalid or expired ❌');
