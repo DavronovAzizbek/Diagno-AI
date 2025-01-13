@@ -28,10 +28,11 @@ export class AuthService {
     return await bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  async registerAdmin(createAuthDto: CreateAuthDto) {
+  async register(createAuthDto: CreateAuthDto, role: Role) {
     const existingUser = await this.userRepository.findOne({
       where: { email: createAuthDto.email },
     });
+
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
@@ -39,28 +40,11 @@ export class AuthService {
     const user = this.userRepository.create({
       email: createAuthDto.email,
       password: await bcrypt.hash(createAuthDto.password, 10),
-      role: Role.ADMIN,
-    });
-    await this.userRepository.save(user);
-    return { message: 'Admin is successfully registered' };
-  }
-
-  async register(createAuthDto: CreateAuthDto) {
-    const existingUser = await this.userRepository.findOne({
-      where: { email: createAuthDto.email },
-    });
-    if (existingUser) {
-      throw new ConflictException('Email already exists');
-    }
-
-    const user = this.userRepository.create({
-      email: createAuthDto.email,
-      password: await bcrypt.hash(createAuthDto.password, 10),
-      role: Role.USER,
+      role,
     });
 
     await this.userRepository.save(user);
-    return { message: 'You are successfully registered' };
+    return { message: `${role} successfully registered` };
   }
 
   async sendVerificationCode(email: string) {

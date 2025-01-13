@@ -13,19 +13,21 @@ import { CreateAuthDto } from './dto/create-auth.dto';
 import { AuthRolesGuard } from './authRoles.guard';
 import { Response, Request } from 'express';
 import { VerificationDto } from './dto/verification.dto';
+import { Role } from './entities/user.entity';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('register/admin')
-  async registerAdmin(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.registerAdmin(createAuthDto);
-  }
-
-  @Post('register/user')
-  async registerStudent(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.register(createAuthDto);
+  @Post('register')
+  async register(
+    @Body() createAuthDto: CreateAuthDto,
+    @Body('role') role: Role,
+  ) {
+    if (!role || ![Role.ADMIN, Role.USER].includes(role)) {
+      throw new UnauthorizedException('Invalid role');
+    }
+    return this.authService.register(createAuthDto, role);
   }
 
   @Post('send-verification-code')
