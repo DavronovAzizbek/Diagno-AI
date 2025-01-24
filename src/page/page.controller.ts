@@ -8,6 +8,7 @@ import {
   UseGuards,
   Param,
   Delete,
+  Put,
 } from '@nestjs/common';
 import { PagesService } from './page.service';
 import { CreatePageDto } from './dto/create-page.dto';
@@ -61,7 +62,38 @@ export class PagesController {
   }
 
   @UseGuards(AuthRolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'user')
+  @Put('update/:id')
+  updatePageName(@Param('id') id: string, @Body('name') name: string): any {
+    try {
+      const updatedPage = this.pagesService.updatePageName(Number(id), name);
+      return {
+        message: 'Page name successfully updated!',
+        data: updatedPage,
+      };
+    } catch (error) {
+      if (error.status === HttpStatus.NOT_FOUND) {
+        throw new HttpException(
+          {
+            message: 'Page not found.',
+            error: error.message,
+          },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      throw new HttpException(
+        {
+          message: 'Failed to update page name. Please try again later.',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @UseGuards(AuthRolesGuard)
+  @Roles('admin', 'user')
   @Delete('delete/:id')
   deletePage(@Param('id') id: string): any {
     try {

@@ -47,6 +47,26 @@ export class PagesService {
     }
   }
 
+  updatePageName(id: number, name: string): Page {
+    try {
+      const page = this.pages.find((page) => page.id === id);
+      if (!page) {
+        throw new HttpException('Page not found', HttpStatus.NOT_FOUND);
+      }
+      page.name = name;
+      page.updateAt = new Date();
+      return page;
+    } catch (error) {
+      if (error.status === HttpStatus.NOT_FOUND) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Failed to update page name. Please try again later.',
+        error.message,
+      );
+    }
+  }
+
   deletePage(id: number): Page {
     try {
       const pageIndex = this.pages.findIndex((page) => page.id === id);

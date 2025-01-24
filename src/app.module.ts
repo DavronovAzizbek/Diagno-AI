@@ -16,7 +16,7 @@ import { Page } from './page/entities/page.entity';
       port: 5432,
       username: 'postgres',
       password: 'azizbek002',
-      database: 'chat6',
+      database: 'chat7',
       entities: [Chat, User, Page],
       synchronize: true,
     }),
