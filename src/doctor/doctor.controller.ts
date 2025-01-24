@@ -1,34 +1,108 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  UseGuards,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DoctorService } from './doctor.service';
 import { CreateDoctorDto } from './dto/create-doctor.dto';
 import { UpdateDoctorDto } from './dto/update-doctor.dto';
+import { AuthRolesGuard, Roles } from 'src/auth/authRoles.guard';
 
-@Controller('doctor')
+@Controller('doctors')
 export class DoctorController {
   constructor(private readonly doctorService: DoctorService) {}
 
+  @UseGuards(AuthRolesGuard)
+  @Roles('admin')
   @Post()
-  create(@Body() createDoctorDto: CreateDoctorDto) {
-    return this.doctorService.create(createDoctorDto);
+  async create(@Body() createDoctorDto: CreateDoctorDto) {
+    try {
+      const doctor = await this.doctorService.create(createDoctorDto);
+      return {
+        message: 'Doctor created successfully',
+        doctor,
+      };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to create doctor');
+    }
   }
 
+  @UseGuards(AuthRolesGuard)
+  @Roles('admin')
   @Get()
-  findAll() {
-    return this.doctorService.findAll();
+  async findAll() {
+    try {
+      const doctors = await this.doctorService.findAll();
+      return {
+        message: 'Doctors fetched successfully',
+        doctors,
+      };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to fetch doctors');
+    }
   }
 
+  @UseGuards(AuthRolesGuard)
+  @Roles('admin')
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.doctorService.findOne(+id);
+  async findOne(@Param('id') id: number) {
+    try {
+      const doctor = await this.doctorService.findOne(id);
+      return {
+        message: `Doctor with ID ${id} fetched successfully`,
+        doctor,
+      };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new NotFoundException(`Doctor with ID ${id} not found`);
+    }
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDoctorDto: UpdateDoctorDto) {
-    return this.doctorService.update(+id, updateDoctorDto);
+  @UseGuards(AuthRolesGuard)
+  @Roles('admin')
+  @Put(':id')
+  async update(
+    @Param('id') id: number,
+    @Body() updateDoctorDto: UpdateDoctorDto,
+  ) {
+    try {
+      const updatedDoctor = await this.doctorService.update(
+        id,
+        updateDoctorDto,
+      );
+      return {
+        message: `Doctor with ID ${id} updated successfully`,
+        updatedDoctor,
+      };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Failed to update doctor with ID ${id}`,
+      );
+    }
   }
 
+  @UseGuards(AuthRolesGuard)
+  @Roles('admin')
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.doctorService.remove(+id);
+  async remove(@Param('id') id: number) {
+    try {
+      await this.doctorService.remove(id);
+      return { message: `Doctor with ID ${id} has been deleted successfully` };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Failed to delete doctor with ID ${id}`,
+      );
+    }
   }
 }

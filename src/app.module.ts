@@ -8,6 +8,7 @@ import { User } from './auth/entities/user.entity';
 import { PagesModule } from './page/page.module';
 import { Page } from './page/entities/page.entity';
 import { DoctorModule } from './doctor/doctor.module';
+import { Doctor } from './doctor/entities/doctor.entity';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { DoctorModule } from './doctor/doctor.module';
       username: 'postgres',
       password: 'azizbek002',
       database: 'chat7',
-      entities: [Chat, User, Page],
+      entities: [Chat, User, Page, Doctor],
       synchronize: true,
     }),
     ChatsModule,
