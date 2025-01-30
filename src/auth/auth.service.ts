@@ -1,7 +1,10 @@
 import {
+  BadRequestException,
+  // BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
+  // NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
@@ -10,124 +13,107 @@ import { User, Role } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import * as nodemailer from 'nodemailer';
+// import * as nodemailer from 'nodemailer';
 import * as crypto from 'crypto';
+import { VerifyDto } from './dto/verify.dto';
 
 @Injectable()
 export class AuthService {
+  [x: string]: any;
+  userModel: any;
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
   ) {}
 
-  async comparePasswords(
-    plainPassword: string,
-    hashedPassword: string,
-  ): Promise<boolean> {
-    return bcrypt.compare(plainPassword, hashedPassword);
-  }
-
-  async registerAdmin(createAuthDto: CreateAuthDto) {
-    const existingUser = await this.userRepository.findOne({
-      where: { email: createAuthDto.email },
-    });
-    if (existingUser) {
-      throw new ConflictException('Email already exists');
-    }
-
-    const user = this.userRepository.create({
-      email: createAuthDto.email,
-      password: await bcrypt.hash(createAuthDto.password, 10),
-      role: Role.ADMIN,
-    });
-    await this.userRepository.save(user);
-    return { message: 'Admin successfully registered' };
-  }
-
   async register(createAuthDto: CreateAuthDto) {
     const existingUser = await this.userRepository.findOne({
       where: { email: createAuthDto.email },
     });
+
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
 
+    const hashedPassword = await bcrypt.hash(createAuthDto.password, 10);
+    const verificationCode = crypto.randomInt(100000, 999999).toString();
+    const verificationCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
     const user = this.userRepository.create({
       email: createAuthDto.email,
-      password: await bcrypt.hash(createAuthDto.password, 10),
-      role: Role.USER,
+      password: hashedPassword,
+      role: createAuthDto.role,
+      verificationCode,
+      verificationCodeExpiresAt,
     });
 
     await this.userRepository.save(user);
-    return { message: 'Successfully registered' };
+    await this.sendVerificationEmail(user.email, verificationCode);
+
+    if (user.role === Role.ADMIN || user.role === Role.USER) {
+      this.adminUsers.add(user.email);
+    }
+
+    return {
+      message: 'Successfully registered. Verification code sent to email',
+    };
   }
 
-  async sendVerificationCode(email: string) {
+  async verifyEmail(verifyDto: VerifyDto) {
+    const { email, code } = verifyDto;
     const user = await this.userRepository.findOne({ where: { email } });
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    if (
+      user.verificationCode !== code ||
+      user.verificationCodeExpiresAt < new Date()
+    ) {
+      throw new BadRequestException('Invalid or expired verification code');
+    }
 
-    const verificationCode = crypto.randomInt(100000, 999999).toString();
-    user.verificationCode = verificationCode;
+    user.isVerified = true;
+    user.verificationCode = null;
     await this.userRepository.save(user);
-
-    await this.sendEmail(
-      user.email,
-      'Verification Code',
-      `Your verification code is: ${verificationCode}`,
-    );
-    return { message: 'Verification code sent to email' };
+    return { message: 'Email successfully verified' };
   }
 
-  async resendVerificationCode(email: string) {
-    return this.sendVerificationCode(email);
-  }
-
-  private async sendEmail(to: string, subject: string, body: string) {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to,
-      subject,
-      text: body,
-    });
-  }
-
-  async login(loginDto: { email: string; password: string }) {
-    const { email, password } = loginDto;
-
+  async resendVerificationCode(resendVerifyDto: ResendVerifyDto) {
+    const { email } = resendVerifyDto;
     const user = await this.userRepository.findOne({ where: { email } });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password ❌');
+      throw new NotFoundException('User not found');
+    }
+    if (user.isVerified) {
+      throw new BadRequestException('Email is already verified');
     }
 
-    const isPasswordValid = await this.comparePasswords(
-      password,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid email or password ❌');
+    user.verificationCode = crypto.randomInt(100000, 999999).toString();
+    user.verificationCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    await this.userRepository.save(user);
+    await this.sendVerificationEmail(user.email, user.verificationCode);
+    return { message: 'New verification code sent' };
+  }
+
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+    const user = await this.userRepository.findOne({ where: { email } });
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    if (!user.isVerified) {
+      throw new UnauthorizedException('Email not verified');
     }
 
     const accessToken = this.jwtService.sign({ id: user.id, role: user.role });
-    const refreshToken = this.jwtService.sign(
-      { id: user.id },
-      { expiresIn: '30d' },
-    );
-
-    user.refreshToken = refreshToken;
-    await this.userRepository.save(user);
-
-    return { accessToken, refreshToken, user };
+    return {
+      accessToken,
+      role: user.role,
+      isAdminUser: this.adminUsers.has(email),
+    };
   }
 
   async refreshAccessToken(

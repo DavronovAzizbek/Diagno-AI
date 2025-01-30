@@ -26,14 +26,23 @@ export class User {
   refreshToken: string;
 
   @Column({ type: 'enum', enum: Role })
-  role: string;
+  role: Role; // Enumni to'g'ri ishlatish
+
+  @Column({ nullable: true })
+  verificationCode: string;
+
+  @Column({ nullable: true })
+  verificationCodeExpiresAt: Date; // VerificationCode uchun muddati
+
+  @Column({ nullable: true })
+  chats: string; // Optional bo'lsa
+
+  @Column({ default: false })
+  isVerified: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
-  verificationCode: any;
-  verificationCodeExpiresAt: Date;
-  chats: any;
 }

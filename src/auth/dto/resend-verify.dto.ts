@@ -1,7 +1,7 @@
 import { IsEmail, IsNotEmpty } from 'class-validator';
 
-export class VerificationDto {
-  @IsNotEmpty()
+export class ResendVerifyDto {
   @IsEmail()
+  @IsNotEmpty()
   email: string;
 }

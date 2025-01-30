@@ -14,13 +14,16 @@ import { Doctor } from './doctor/entities/doctor.entity';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
+      host: 'dpg-cudtiut2ng1s73enlsvg-a',
       port: 5432,
-      username: 'postgres',
-      password: 'azizbek002',
-      database: 'chat7',
+      username: 'fullstack_l413_user',
+      password: 'u6R9iUGSe0I11HPRTJafJiSNnRwXZvao',
+      database: 'fullstack_l413',
       entities: [Chat, User, Page, Doctor],
       synchronize: true,
+      ssl: {
+        rejectUnauthorized: false,
+      },
     }),
     ChatsModule,
     AuthModule,

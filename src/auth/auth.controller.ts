@@ -12,51 +12,41 @@ import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { AuthRolesGuard } from './authRoles.guard';
 import { Response, Request } from 'express';
-import { VerificationDto } from './dto/verification.dto';
+import { VerifyDto } from './dto/verify.dto';
+import { LoginDto } from './dto/login.dto';
+import { ResendVerifyDto } from './dto/resend-verify.dto';
+// import { VerificationDto } from './dto/verification.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('register/admin')
-  async registerAdmin(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.registerAdmin(createAuthDto);
+  @Post('register')
+  async register(@Body() createAuthDto: CreateAuthDto, @Res() res: Response) {
+    const response = await this.authService.register(createAuthDto);
+    return res.status(201).json(response);
   }
 
-  @Post('register/user')
-  async registerStudent(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.register(createAuthDto);
+  @Post('verify')
+  async verifyEmail(@Body() verifyDto: VerifyDto, @Res() res: Response) {
+    const response = await this.authService.verifyEmail(verifyDto);
+    return res.status(200).json(response);
   }
 
-  @Post('send-verification-code')
-  async sendVerificationCode(@Body() body: VerificationDto) {
-    return this.authService.sendVerificationCode(body.email);
-  }
-
-  @Post('resend-verification-code')
-  async resendVerificationCode(@Body() body: VerificationDto) {
-    return this.authService.resendVerificationCode(body.email);
+  @Post('resend-verification')
+  async resendVerificationCode(
+    @Body() resendVerifyDto: ResendVerifyDto,
+    @Res() res: Response,
+  ) {
+    const response =
+      await this.authService.resendVerificationCode(resendVerifyDto);
+    return res.status(200).json(response);
   }
 
   @Post('login')
-  async login(
-    @Body() loginDto: { email: string; password: string },
-    @Res() res: Response,
-  ) {
-    const { accessToken, refreshToken, user } =
-      await this.authService.login(loginDto);
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 kun
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, refreshToken: _, ...sanitizedUser } = user;
-
-    return res.status(200).json({ accessToken, user: sanitizedUser });
+  async login(@Body() loginDto: LoginDto, @Res() res: Response) {
+    const response = await this.authService.login(loginDto);
+    return res.status(200).json(response);
   }
 
   @UseGuards(AuthRolesGuard)
