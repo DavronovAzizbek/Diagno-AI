@@ -37,6 +37,7 @@ export class ChatsService {
       content: [],
       isFavorite: createChatDto.isFavorite || false,
     });
+
     return this.chatRepository.save(chat);
   }
 

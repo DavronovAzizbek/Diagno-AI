@@ -24,5 +24,7 @@ export class CreateChatDto {
   @IsInt()
   @Min(1)
   userId?: number;
-  user: { id: any };
+
+  @IsOptional()
+  user: { id: number };
 }

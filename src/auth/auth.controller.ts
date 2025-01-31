@@ -14,8 +14,6 @@ import { AuthRolesGuard } from './authRoles.guard';
 import { Response, Request } from 'express';
 import { VerifyDto } from './dto/verify.dto';
 import { LoginDto } from './dto/login.dto';
-import { ResendVerifyDto } from './dto/resend-verify.dto';
-// import { VerificationDto } from './dto/verification.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -33,14 +31,9 @@ export class AuthController {
     return res.status(200).json(response);
   }
 
-  @Post('resend-verification')
-  async resendVerificationCode(
-    @Body() resendVerifyDto: ResendVerifyDto,
-    @Res() res: Response,
-  ) {
-    const response =
-      await this.authService.resendVerificationCode(resendVerifyDto);
-    return res.status(200).json(response);
+  @Post('resend-verification-code')
+  async resendVerificationCode(@Body('email') email: string) {
+    return this.authService.resendVerificationCode(email);
   }
 
   @Post('login')

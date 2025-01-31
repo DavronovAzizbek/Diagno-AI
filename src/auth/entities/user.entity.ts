@@ -16,7 +16,7 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 2500, unique: true })
+  @Column({ type: 'varchar', length: 250, unique: true })
   email: string;
 
   @Column()
@@ -25,17 +25,14 @@ export class User {
   @Column({ nullable: true })
   refreshToken: string;
 
-  @Column({ type: 'enum', enum: Role })
-  role: Role; // Enumni to'g'ri ishlatish
+  @Column({ type: 'enum', enum: Role, default: Role.USER })
+  role: Role;
 
   @Column({ nullable: true })
   verificationCode: string;
 
   @Column({ nullable: true })
-  verificationCodeExpiresAt: Date; // VerificationCode uchun muddati
-
-  @Column({ nullable: true })
-  chats: string; // Optional bo'lsa
+  verificationCodeExpiresAt: Date;
 
   @Column({ default: false })
   isVerified: boolean;
@@ -45,4 +42,5 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt: Date;
+  chats: any;
 }

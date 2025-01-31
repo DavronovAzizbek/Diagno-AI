@@ -29,8 +29,14 @@ export class ChatsController {
   @Roles('user', 'admin')
   @Post()
   async createChat(@Body() createChatDto: CreateChatDto, @Req() req) {
-    const userId = req.user.id;
+    const userId = req.user.userId;
+
+    if (!userId) {
+      throw new Error('User ID not found');
+    }
+
     createChatDto.userId = userId;
+
     const newChat = await this.chatsService.createChat(createChatDto);
     return { message: 'Chat created successfully', data: newChat };
   }

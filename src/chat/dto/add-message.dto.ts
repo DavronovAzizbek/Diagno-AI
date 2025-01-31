@@ -7,5 +7,5 @@ export class AddMessageDto {
 
   @IsString()
   @IsNotEmpty()
-  author: string; // Xabarni kim yozgan
+  author: string;
 }

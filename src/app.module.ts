@@ -9,21 +9,22 @@ import { PagesModule } from './page/page.module';
 import { Page } from './page/entities/page.entity';
 import { DoctorModule } from './doctor/doctor.module';
 import { Doctor } from './doctor/entities/doctor.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'dpg-cudtiut2ng1s73enlsvg-a',
+      host: 'localhost',
       port: 5432,
-      username: 'fullstack_l413_user',
-      password: 'u6R9iUGSe0I11HPRTJafJiSNnRwXZvao',
-      database: 'fullstack_l413',
+      username: 'postgres',
+      password: 'azizbek002',
+      database: 'chat14',
       entities: [Chat, User, Page, Doctor],
       synchronize: true,
-      ssl: {
-        rejectUnauthorized: false,
-      },
     }),
     ChatsModule,
     AuthModule,
