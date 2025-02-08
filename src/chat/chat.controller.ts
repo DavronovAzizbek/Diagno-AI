@@ -11,6 +11,8 @@ import {
   BadRequestException,
   InternalServerErrorException,
   Req,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { ChatsService } from './chat.service';
 import { CreateChatDto } from './dto/create-chat.dto';
@@ -20,10 +22,106 @@ import { AddMessageDto } from './dto/add-message.dto';
 import { AuthRolesGuard } from 'src/auth/authRoles.guard';
 import { Roles } from 'src/auth/roleAdmin.guard';
 import { RolesUserGuard } from 'src/auth/roleUserGuard';
+import { CreateRequestDto } from './dto/create-request.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as path from 'path';
+import * as fs from 'fs/promises';
 
 @Controller('chats')
 export class ChatsController {
   constructor(private readonly chatsService: ChatsService) {}
+
+  @UseGuards(RolesUserGuard)
+  @Roles('user')
+  @Post('request')
+  async sendRequest(@Body() createRequestDto: CreateRequestDto) {
+    try {
+      const response =
+        await this.chatsService.handleUserRequest(createRequestDto);
+      return response.message;
+    } catch (error) {
+      console.error('Error processing request:', error);
+      throw new InternalServerErrorException('Failed to process request');
+    }
+  }
+
+  @UseGuards(RolesUserGuard)
+  @Roles('user')
+  @Post('voice')
+  @UseInterceptors(
+    FileInterceptor('audio', {
+      storage: diskStorage({
+        destination: './uploads/audio',
+        filename: (req, file, callback) => {
+          const filename = `${Date.now()}${path.extname(file.originalname)}`;
+          callback(null, filename);
+        },
+      }),
+      fileFilter: (req, file, callback) => {
+        if (!file.mimetype.startsWith('audio/')) {
+          return callback(new BadRequestException('Invalid audio file'), false);
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  async handleVoiceUpload(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No audio file uploaded');
+    }
+
+    const textResponse = this.chatsService.processAudioFile();
+
+    return textResponse;
+  }
+
+  @UseGuards(RolesUserGuard)
+  @Roles('user')
+  @Post('file-request')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: async (req, file, callback) => {
+          const today = new Date().toISOString().split('T')[0];
+          const uploadPath = `./uploads/${today}`;
+
+          try {
+            await fs.mkdir(uploadPath, { recursive: true });
+            callback(null, uploadPath);
+          } catch (err) {
+            callback(err, uploadPath);
+          }
+        },
+        filename: (req, file, callback) => {
+          const filename = `${Date.now()}${path.extname(file.originalname)}`;
+          callback(null, filename);
+        },
+      }),
+      fileFilter: (req, file, callback) => {
+        if (file.mimetype !== 'text/plain') {
+          return callback(
+            new BadRequestException('Only .txt files are allowed'),
+            false,
+          );
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  async handleFileUpload(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    try {
+      const response = await this.chatsService.processFile(file.path);
+      return response;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to process file');
+    }
+  }
 
   @UseGuards(AuthRolesGuard)
   @Roles('user', 'admin')

@@ -39,6 +39,12 @@ export class Chat {
   @UpdateDateColumn()
   updatedAt: Date;
 
+  @Column({ nullable: true })
+  request: string;
+
+  @Column({ nullable: true })
+  response: string;
+
   @ManyToOne(() => User, (user) => user.chats, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;

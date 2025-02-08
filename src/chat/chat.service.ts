@@ -1,26 +1,55 @@
 import {
-  BadRequestException,
   Injectable,
   NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Chat } from './entities/chat.entity';
+import { User } from 'src/auth/entities/user.entity';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
 import { EditMessageDto } from './dto/edit-message.dto';
 import { AddMessageDto } from './dto/add-message.dto';
-import { User } from 'src/auth/entities/user.entity';
+import { CreateRequestDto } from './dto/create-request.dto';
+import * as dotenv from 'dotenv';
+import * as fs from 'fs/promises';
+
+dotenv.config();
 
 @Injectable()
 export class ChatsService {
-  chatsService: any;
   constructor(
     @InjectRepository(Chat)
     private readonly chatRepository: Repository<Chat>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
+
+  async handleUserRequest(createRequestDto: CreateRequestDto) {
+    const requestMessage = createRequestDto.question;
+
+    const textResponse = `Siz yuborgan so‘rov: "${requestMessage}". Bu so‘rovga javoban avtomatik javob qaytaryapmiz.`;
+
+    return { message: textResponse };
+  }
+
+  processAudioFile(): string {
+    const fakeTranscript = 'Foydalanuvchi tashhisi tayyor.';
+
+    return `✅ Tashxis tayyor. Bu so‘rovga javoban avtomatik javob qaytaryapmiz: "${fakeTranscript}"`;
+  }
+
+  async processFile(filePath: string): Promise<string> {
+    try {
+      await fs.readFile(filePath, 'utf-8');
+      return `✅ Fayl qabul qilindi. Sizning savolingiz bo‘yicha tahlil davom etmoqda. Tez orada javob olasiz.`;
+    } catch (error) {
+      console.error('Error reading file:', error);
+      throw new InternalServerErrorException('Failed to read file');
+    }
+  }
 
   async getChatById(id: number): Promise<Chat> {
     const chat = await this.chatRepository.findOne({ where: { id } });

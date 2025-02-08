@@ -22,7 +22,7 @@ import { ConfigModule } from '@nestjs/config';
       port: 5432,
       username: 'postgres',
       password: 'azizbek002',
-      database: 'chat14',
+      database: 'chat15',
       entities: [Chat, User, Page, Doctor],
       synchronize: true,
     }),
